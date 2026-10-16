@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  syntax:
+    name: Syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Compile all sources (read-only syntax validation)
+        run: python -m compileall -q sqlcockpit tests
+
+  test:
+    name: Tests (${{ matrix.os }} / Py ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Smoke test CLI
+        shell: bash
+        run: |
+          python -m sqlcockpit --version
+          python -c "import sqlite3; c=sqlite3.connect('smoke.db'); c.execute('create table t(a int, b text)'); c.execute('insert into t values (1, \'x\')'); c.commit(); c.close()"
+          python -m sqlcockpit open smoke.db
+          python -m sqlcockpit schema smoke.db
+          python -m sqlcockpit query smoke.db "select * from t"
+          python -m sqlcockpit er smoke.db
+          python -m sqlcockpit doctor smoke.db
+
+  package:
+    name: Build & install package
+    runs-on: ubuntu-latest
+    needs: [syntax, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+      - name: Install wheel and verify console script
+        run: |
+          python -m pip install dist/*.whl
+          sqlcockpit --version
+          sqlcockpit --help
