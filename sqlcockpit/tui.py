@@ -14,13 +14,14 @@ from .doctor import render_report, run_checks
 from .erdiagram import build_model, render_model
 from .formatters import render_table, to_format
 from .importer import import_file
-from .utils import quote_ident
+from .utils import configure_streams, quote_ident
 
 TABLES, SQL, RESULTS = 0, 1, 2
 
 
 def run_tui(db_path: str) -> int:
     """Launch the TUI, falling back to a menu when curses is unavailable."""
+    configure_streams()
     try:
         import curses  # noqa: F401
     except ImportError:

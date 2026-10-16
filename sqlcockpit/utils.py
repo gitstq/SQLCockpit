@@ -64,3 +64,21 @@ class Timer:
 
     def __exit__(self, *exc_info: Any) -> None:
         self.elapsed = (_dt.datetime.now() - self._start).total_seconds()
+
+
+def configure_streams() -> None:
+    """Make stdout/stderr UTF-8 safe so Unicode box drawing renders everywhere.
+
+    On Windows the default console codec (cp1252) cannot encode the Unicode
+    box-drawing characters used by the table renderer and would raise a
+    ``charmap`` ``UnicodeEncodeError``. Reconfiguring to UTF-8 with a
+    ``replace`` fallback keeps the CLI crash-free on legacy terminals.
+    """
+    import sys
+
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):
+                pass

@@ -14,7 +14,7 @@ from .doctor import render_report, run_checks
 from .erdiagram import build_model, render_model
 from .formatters import FORMATS, render_table, to_format
 from .importer import import_file
-from .utils import quote_ident
+from .utils import configure_streams, quote_ident
 
 BANNER = (
     "\n"
@@ -276,6 +276,7 @@ def _save_readline_history() -> None:
 
 def run_shell(db_path: str) -> int:
     """Open ``db_path`` and run the interactive shell."""
+    configure_streams()
     _load_readline_history()
     with Database(db_path) as db:
         shell = DeckShell(db)

@@ -6,6 +6,7 @@ import sys
 from typing import Any, List, Optional
 
 from . import __version__
+from .utils import configure_streams
 from .bench import benchmark, render_bench
 from .db import Database, DatabaseError
 from .differ import diff_databases, render_diff
@@ -259,6 +260,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    configure_streams()
     parser = build_parser()
     args = parser.parse_args(argv)
     if not getattr(args, "command", None):
